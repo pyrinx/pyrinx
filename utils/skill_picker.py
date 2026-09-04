@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 import questionary
 
@@ -48,7 +47,7 @@ class SkillEntry:
     path: Path
 
 
-def _find_skills() -> List[SkillEntry]:
+def _find_skills() -> list[SkillEntry]:
     """Discover specialist skills with a non-empty baseline file.
 
     Returns:
@@ -62,7 +61,7 @@ def _find_skills() -> List[SkillEntry]:
         raise RuntimeError(f"skills directory does not exist: {_SKILLS_DIR}")
 
     try:
-        entries: List[SkillEntry] = []
+        entries: list[SkillEntry] = []
         for skill_dir in sorted(
             _SKILLS_DIR.iterdir(),
             key=lambda p: p.name.casefold(),
@@ -95,7 +94,7 @@ def _find_skills() -> List[SkillEntry]:
         ) from exc
 
 
-def _select_skill(entries: List[SkillEntry]) -> Optional[SkillEntry]:
+def _select_skill(entries: list[SkillEntry]) -> SkillEntry | None:
     """Prompt the user to select a skill using questionary.
 
     Args:

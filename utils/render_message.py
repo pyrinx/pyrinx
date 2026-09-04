@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict
 
 from pygments.lexers import guess_lexer
 from pygments.util import ClassNotFound
@@ -19,7 +18,7 @@ from rich.text import Text
 
 from utils.console import console
 
-__all__ = ["Role", "out_system", "out_agent", "out_user"]
+__all__ = ["Role", "out_agent", "out_system", "out_user"]
 
 DEFAULT_LEXER = "text"
 SYNTAX_BACKGROUND = "#15181D"
@@ -59,7 +58,7 @@ class RoleStyle:
         return f"{self.foreground} bold on {self.background}"
 
 
-ROLE_STYLES: Dict[Role, RoleStyle] = {
+ROLE_STYLES: dict[Role, RoleStyle] = {
     Role.SYSTEM: RoleStyle("#FBF5E9", "#8A6419"),
     Role.AGENT: RoleStyle("#E9FBEC", "#198A2C"),
     Role.USER: RoleStyle("#E9EFFB", "#193F8A"),
@@ -85,15 +84,6 @@ def _guess_lexer_name(body: str) -> str:
             return aliases[0]
         return DEFAULT_LEXER
     except ClassNotFound:
-        return DEFAULT_LEXER
-    except Exception as exc:  # Defensive: do not fail rendering on unexpected errors.
-        # Log the unexpected error at debug level and fall back to the default.
-        # Using console rather than print keeps output consistent with the module.
-        try:
-            console.log(f"Failed to guess lexer: {exc}")
-        except Exception:
-            # If console logging itself fails, silently fallback - do not raise.
-            pass
         return DEFAULT_LEXER
 
 

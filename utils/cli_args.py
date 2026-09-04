@@ -9,9 +9,8 @@ built-in error/usage handling remains in place.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import argparse
-from typing import List, Optional
+from dataclasses import dataclass
 
 __all__ = ["Args", "parse_args"]
 
@@ -33,7 +32,7 @@ class Args:
     target: str
 
 
-def parse_args(argv: Optional[List[str]] = None) -> Args:
+def parse_args(argv: list[str] | None = None) -> Args:
     """Parse command-line arguments and return an Args object.
 
     Args:

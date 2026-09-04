@@ -13,7 +13,7 @@ when stopped or when the context is exited.
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Type
+from typing import Self
 
 from rich.status import Status
 from rich.text import Text
@@ -82,14 +82,14 @@ class Spinner:
             self._status.stop()
             self._active = False
 
-    def __enter__(self) -> "Spinner":
+    def __enter__(self) -> Self:
         """Enter context: start and return self."""
         self.start()
         return self
 
     def __exit__(
         self,
-        exc_type: Type[BaseException] | None,
+        exc_type: type[BaseException] | None,
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
