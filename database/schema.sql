@@ -4,8 +4,8 @@ PRAGMA foreign_keys  = ON;
 PRAGMA busy_timeout  = 5000;
 PRAGMA temp_store    = MEMORY;
 
--- ─── SESSIONS ───────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS sessions (
+-- ─── SESSION ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS session (
     id          TEXT PRIMARY KEY,
     target      TEXT NOT NULL,
     status      TEXT NOT NULL DEFAULT 'active',
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS exchange (
     last_accessed_at TEXT NOT NULL
                      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
-    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES session(id) ON DELETE CASCADE,
 
     CHECK (id GLOB 'exc[0-9]*'),
     CHECK (length(trim(url)) > 0),
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS evidence (
     last_accessed_at TEXT NOT NULL
                      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
-    FOREIGN KEY (session_id)  REFERENCES sessions(id)  ON DELETE CASCADE,
+    FOREIGN KEY (session_id)  REFERENCES session(id)  ON DELETE CASCADE,
     FOREIGN KEY (exchange_id) REFERENCES exchange(id)  ON DELETE SET NULL,
 
     CHECK (id GLOB 'evi[0-9]*'),
@@ -73,8 +73,8 @@ CREATE TABLE IF NOT EXISTS evidence (
     CHECK (confidence >= 0.0 AND confidence <= 1.0)
 );
 
--- ─── HYPOTHESES (tree via parent_id) ────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS hypotheses (
+-- ─── HYPOTHESIS (tree via parent_id) ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS hypothesis (
     id               TEXT PRIMARY KEY,
     session_id       TEXT NOT NULL,
     parent_id        TEXT,
@@ -91,8 +91,8 @@ CREATE TABLE IF NOT EXISTS hypotheses (
     last_accessed_at TEXT NOT NULL
                      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
-    FOREIGN KEY (session_id) REFERENCES sessions(id)    ON DELETE CASCADE,
-    FOREIGN KEY (parent_id)  REFERENCES hypotheses(id)  ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES session(id)    ON DELETE CASCADE,
+    FOREIGN KEY (parent_id)  REFERENCES hypothesis(id)  ON DELETE CASCADE,
 
     CHECK (id GLOB 'hyp[0-9]*'),
     CHECK (length(trim(claim)) > 0),
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS finding (
     last_accessed_at TEXT NOT NULL
                      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
-    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES session(id) ON DELETE CASCADE,
 
     CHECK (id GLOB 'fin[0-9]*'),
     CHECK (length(trim(title)) > 0),
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS knowledge (
     CHECK (json_valid(tags)       AND json_type(tags)       = 'array')
 );
 
--- ─── JUNCTIONS ──────────────────────────────────────────────────────────────
+-- ─── JUNCTION ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS hypothesis_evidence (
     hypothesis_id TEXT NOT NULL,
     evidence_id   TEXT NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS hypothesis_evidence (
                   DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
     PRIMARY KEY (hypothesis_id, evidence_id),
-    FOREIGN KEY (hypothesis_id) REFERENCES hypotheses(id) ON DELETE CASCADE,
+    FOREIGN KEY (hypothesis_id) REFERENCES hypothesis(id) ON DELETE CASCADE,
     FOREIGN KEY (evidence_id)   REFERENCES evidence(id)   ON DELETE CASCADE
 );
 
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS finding_evidence (
     FOREIGN KEY (evidence_id) REFERENCES evidence(id) ON DELETE CASCADE
 );
 
--- ─── INDEXES ────────────────────────────────────────────────────────────────
+-- ─── INDEX ────────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_exchange_session
     ON exchange(session_id);
 CREATE INDEX IF NOT EXISTS idx_exchange_last_accessed
@@ -181,14 +181,14 @@ CREATE INDEX IF NOT EXISTS idx_evidence_exchange
 CREATE INDEX IF NOT EXISTS idx_evidence_last_accessed
     ON evidence(last_accessed_at);
 
-CREATE INDEX IF NOT EXISTS idx_hypotheses_session
-    ON hypotheses(session_id);
-CREATE INDEX IF NOT EXISTS idx_hypotheses_parent
-    ON hypotheses(parent_id);
-CREATE INDEX IF NOT EXISTS idx_hypotheses_status
-    ON hypotheses(status);
-CREATE INDEX IF NOT EXISTS idx_hypotheses_last_accessed
-    ON hypotheses(last_accessed_at);
+CREATE INDEX IF NOT EXISTS idx_hypothesis_session
+    ON hypothesis(session_id);
+CREATE INDEX IF NOT EXISTS idx_hypothesis_parent
+    ON hypothesis(parent_id);
+CREATE INDEX IF NOT EXISTS idx_hypothesis_status
+    ON hypothesis(status);
+CREATE INDEX IF NOT EXISTS idx_hypothesis_last_accessed
+    ON hypothesis(last_accessed_at);
 
 CREATE INDEX IF NOT EXISTS idx_finding_session
     ON finding(session_id);
@@ -213,7 +213,7 @@ FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
     WHERE NEW.vuln_class IS NOT NULL
-      AND NEW.vuln_class != (SELECT vuln_class FROM sessions WHERE id = NEW.session_id);
+      AND NEW.vuln_class != (SELECT vuln_class FROM session WHERE id = NEW.session_id);
 END;
 
 CREATE TRIGGER IF NOT EXISTS trg_evidence_vuln_class
@@ -222,16 +222,16 @@ FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
     WHERE NEW.vuln_class IS NOT NULL
-      AND NEW.vuln_class != (SELECT vuln_class FROM sessions WHERE id = NEW.session_id);
+      AND NEW.vuln_class != (SELECT vuln_class FROM session WHERE id = NEW.session_id);
 END;
 
-CREATE TRIGGER IF NOT EXISTS trg_hypotheses_vuln_class
-BEFORE INSERT ON hypotheses
+CREATE TRIGGER IF NOT EXISTS trg_hypothesis_vuln_class
+BEFORE INSERT ON hypothesis
 FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
     WHERE NEW.vuln_class IS NOT NULL
-      AND NEW.vuln_class != (SELECT vuln_class FROM sessions WHERE id = NEW.session_id);
+      AND NEW.vuln_class != (SELECT vuln_class FROM session WHERE id = NEW.session_id);
 END;
 
 CREATE TRIGGER IF NOT EXISTS trg_finding_vuln_class
@@ -240,5 +240,5 @@ FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
     WHERE NEW.vuln_class IS NOT NULL
-      AND NEW.vuln_class != (SELECT vuln_class FROM sessions WHERE id = NEW.session_id);
+      AND NEW.vuln_class != (SELECT vuln_class FROM session WHERE id = NEW.session_id);
 END;
