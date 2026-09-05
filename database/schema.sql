@@ -6,12 +6,14 @@ PRAGMA temp_store    = MEMORY;
 
 -- ─── SESSIONS ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS sessions (
-    id          TEXT PRIMARY KEY,
-    target      TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'active',
-    vuln_class  TEXT NOT NULL,
-    created_at  TEXT NOT NULL
-                DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    id               TEXT PRIMARY KEY,
+    target           TEXT NOT NULL,
+    status           TEXT NOT NULL DEFAULT 'active',
+    vuln_class       TEXT NOT NULL,
+    created_at       TEXT NOT NULL
+                     DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    last_accessed_at TEXT NOT NULL
+                     DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
     CHECK (id GLOB 'ses[0-9]*'),
     CHECK (length(trim(target)) > 0),
@@ -19,8 +21,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     CHECK (status IN ('active', 'closed'))
 );
 
--- ─── EXCHANGE ───────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS exchange (
+-- ─── EXCHANGES ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS exchanges (
     id               TEXT PRIMARY KEY,
     session_id       TEXT NOT NULL,
     url              TEXT NOT NULL,
@@ -51,8 +53,8 @@ CREATE TABLE IF NOT EXISTS exchange (
            AND json_type(response_headers) = 'object')
 );
 
--- ─── EVIDENCE ───────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS evidence (
+-- ─── EVIDENCES ───────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS evidences (
     id               TEXT PRIMARY KEY,
     session_id       TEXT NOT NULL,
     exchange_id      TEXT,
@@ -66,7 +68,7 @@ CREATE TABLE IF NOT EXISTS evidence (
                      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
     FOREIGN KEY (session_id)  REFERENCES sessions(id)  ON DELETE CASCADE,
-    FOREIGN KEY (exchange_id) REFERENCES exchange(id)  ON DELETE SET NULL,
+    FOREIGN KEY (exchange_id) REFERENCES exchanges(id)  ON DELETE SET NULL,
 
     CHECK (id GLOB 'evi[0-9]*'),
     CHECK (length(trim(observation)) > 0),
@@ -102,8 +104,8 @@ CREATE TABLE IF NOT EXISTS hypotheses (
     CHECK (parent_id IS NULL OR parent_id != id)
 );
 
--- ─── FINDING ────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS finding (
+-- ─── FINDINGS ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS findings (
     id               TEXT PRIMARY KEY,
     session_id       TEXT NOT NULL,
     title            TEXT NOT NULL,
@@ -125,17 +127,19 @@ CREATE TABLE IF NOT EXISTS finding (
     CHECK (verified IN (0, 1))
 );
 
--- ─── KNOWLEDGE (long-term) ──────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS knowledge (
-    id             TEXT PRIMARY KEY,
-    summary        TEXT NOT NULL,
-    indicators     TEXT NOT NULL DEFAULT '[]',
-    attack_surface TEXT,
-    attack_vector  TEXT,
-    vuln_class     TEXT,
-    tags           TEXT NOT NULL DEFAULT '[]',
-    created_at     TEXT NOT NULL
-                   DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+-- ─── KNOWLEDGES (long-term) ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS knowledges (
+    id               TEXT PRIMARY KEY,
+    summary          TEXT NOT NULL,
+    indicators       TEXT NOT NULL DEFAULT '[]',
+    attack_surface   TEXT,
+    attack_vector    TEXT,
+    vuln_class       TEXT,
+    tags             TEXT NOT NULL DEFAULT '[]',
+    created_at       TEXT NOT NULL
+                     DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    last_accessed_at TEXT NOT NULL
+                     DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
     CHECK (id GLOB 'kno[0-9]*'),
     CHECK (length(trim(summary)) > 0),
@@ -144,7 +148,7 @@ CREATE TABLE IF NOT EXISTS knowledge (
 );
 
 -- ─── JUNCTIONS ──────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS hypothesis_evidence (
+CREATE TABLE IF NOT EXISTS hypotheses_evidences (
     hypothesis_id TEXT NOT NULL,
     evidence_id   TEXT NOT NULL,
     created_at    TEXT NOT NULL
@@ -152,34 +156,37 @@ CREATE TABLE IF NOT EXISTS hypothesis_evidence (
 
     PRIMARY KEY (hypothesis_id, evidence_id),
     FOREIGN KEY (hypothesis_id) REFERENCES hypotheses(id) ON DELETE CASCADE,
-    FOREIGN KEY (evidence_id)   REFERENCES evidence(id)   ON DELETE CASCADE
+    FOREIGN KEY (evidence_id)   REFERENCES evidences(id)   ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS finding_evidence (
+CREATE TABLE IF NOT EXISTS findings_evidences (
     finding_id  TEXT NOT NULL,
     evidence_id TEXT NOT NULL,
     created_at  TEXT NOT NULL
                 DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
     PRIMARY KEY (finding_id, evidence_id),
-    FOREIGN KEY (finding_id)  REFERENCES finding(id)  ON DELETE CASCADE,
-    FOREIGN KEY (evidence_id) REFERENCES evidence(id) ON DELETE CASCADE
+    FOREIGN KEY (finding_id)  REFERENCES findings(id)  ON DELETE CASCADE,
+    FOREIGN KEY (evidence_id) REFERENCES evidences(id) ON DELETE CASCADE
 );
 
 -- ─── INDEXES ────────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_exchange_session
-    ON exchange(session_id);
-CREATE INDEX IF NOT EXISTS idx_exchange_last_accessed
-    ON exchange(last_accessed_at);
-CREATE INDEX IF NOT EXISTS idx_exchange_vuln_class
-    ON exchange(vuln_class);
+CREATE INDEX IF NOT EXISTS idx_sessions_last_accessed
+    ON sessions(last_accessed_at);
 
-CREATE INDEX IF NOT EXISTS idx_evidence_session
-    ON evidence(session_id);
-CREATE INDEX IF NOT EXISTS idx_evidence_exchange
-    ON evidence(exchange_id);
-CREATE INDEX IF NOT EXISTS idx_evidence_last_accessed
-    ON evidence(last_accessed_at);
+CREATE INDEX IF NOT EXISTS idx_exchanges_session
+    ON exchanges(session_id);
+CREATE INDEX IF NOT EXISTS idx_exchanges_last_accessed
+    ON exchanges(last_accessed_at);
+CREATE INDEX IF NOT EXISTS idx_exchanges_vuln_class
+    ON exchanges(vuln_class);
+
+CREATE INDEX IF NOT EXISTS idx_evidences_session
+    ON evidences(session_id);
+CREATE INDEX IF NOT EXISTS idx_evidences_exchange
+    ON evidences(exchange_id);
+CREATE INDEX IF NOT EXISTS idx_evidences_last_accessed
+    ON evidences(last_accessed_at);
 
 CREATE INDEX IF NOT EXISTS idx_hypotheses_session
     ON hypotheses(session_id);
@@ -190,25 +197,27 @@ CREATE INDEX IF NOT EXISTS idx_hypotheses_status
 CREATE INDEX IF NOT EXISTS idx_hypotheses_last_accessed
     ON hypotheses(last_accessed_at);
 
-CREATE INDEX IF NOT EXISTS idx_finding_session
-    ON finding(session_id);
-CREATE INDEX IF NOT EXISTS idx_finding_verified
-    ON finding(verified);
-CREATE INDEX IF NOT EXISTS idx_finding_last_accessed
-    ON finding(last_accessed_at);
+CREATE INDEX IF NOT EXISTS idx_findings_session
+    ON findings(session_id);
+CREATE INDEX IF NOT EXISTS idx_findings_verified
+    ON findings(verified);
+CREATE INDEX IF NOT EXISTS idx_findings_last_accessed
+    ON findings(last_accessed_at);
 
-CREATE INDEX IF NOT EXISTS idx_knowledge_vuln_class
-    ON knowledge(vuln_class);
+CREATE INDEX IF NOT EXISTS idx_knowledges_vuln_class
+    ON knowledges(vuln_class);
+CREATE INDEX IF NOT EXISTS idx_knowledges_last_accessed
+    ON knowledges(last_accessed_at);
 
 CREATE INDEX IF NOT EXISTS idx_hyp_evi_evidence
-    ON hypothesis_evidence(evidence_id);
+    ON hypotheses_evidences(evidence_id);
 CREATE INDEX IF NOT EXISTS idx_fin_evi_evidence
-    ON finding_evidence(evidence_id);
+    ON findings_evidences(evidence_id);
 
--- ─── ENFORCE vuln_class = session.vuln_class ────────────────────────────────
+-- ─── ENFORCE vuln_class = sessions.vuln_class ────────────────────────────────
 
-CREATE TRIGGER IF NOT EXISTS trg_exchange_vuln_class
-BEFORE INSERT ON exchange
+CREATE TRIGGER IF NOT EXISTS trg_exchanges_vuln_class
+BEFORE INSERT ON exchanges
 FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
@@ -216,8 +225,8 @@ BEGIN
       AND NEW.vuln_class != (SELECT vuln_class FROM sessions WHERE id = NEW.session_id);
 END;
 
-CREATE TRIGGER IF NOT EXISTS trg_evidence_vuln_class
-BEFORE INSERT ON evidence
+CREATE TRIGGER IF NOT EXISTS trg_evidences_vuln_class
+BEFORE INSERT ON evidences
 FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
@@ -234,8 +243,8 @@ BEGIN
       AND NEW.vuln_class != (SELECT vuln_class FROM sessions WHERE id = NEW.session_id);
 END;
 
-CREATE TRIGGER IF NOT EXISTS trg_finding_vuln_class
-BEFORE INSERT ON finding
+CREATE TRIGGER IF NOT EXISTS trg_findings_vuln_class
+BEFORE INSERT ON findings
 FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'vuln_class must match session')
