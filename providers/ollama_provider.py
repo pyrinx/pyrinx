@@ -48,8 +48,7 @@ def _extract_context_length(modelinfo: dict[str, Any] | None) -> int | None:
         return None
 
     for key, value in modelinfo.items():
-        # Some models expose context_length, others may use names like
-        # "max_context" — we look for any key ending with "context_length".
+        # Ollama model_info uses keys ending with "context_length".
         if key.endswith("context_length") and isinstance(value, int):
             return value
 
