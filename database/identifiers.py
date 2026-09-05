@@ -22,11 +22,11 @@ MAX_ID_RETRIES: int = 5
 
 TABLE_PREFIXES: dict[str, str] = {
     "sessions": "ses",
-    "exchange": "exc",
-    "evidence": "evi",
-    "hypothesis": "hyp",
-    "finding": "fin",
-    "knowledge": "kno",
+    "exchanges": "exc",
+    "evidences": "evi",
+    "hypotheses": "hyp",
+    "findings": "fin",
+    "knowledges": "kno",
 }
 
 

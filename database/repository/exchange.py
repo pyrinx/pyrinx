@@ -84,7 +84,7 @@ def create_exchange(
 
         exchange_id = insert_with_unique_id(
             conn,
-            "exchange",
+            "exchanges",
             {
                 "session_id": session_id,
                 "url": url,
@@ -99,24 +99,24 @@ def create_exchange(
             },
         )
 
-        row = fetch_one(conn, "exchange", exchange_id, _FIELDS)
+        row = fetch_one(conn, "exchanges", exchange_id, _FIELDS)
 
     return _summarize(row)
 
 
 def get_exchange(ids: list[str]) -> list[dict[str, object]]:
     """Return summarized exchange records for given ids."""
-    return batch_get(ids, "exchange", _FIELDS[:-1], _summarize)
+    return batch_get(ids, "exchanges", _FIELDS[:-1], _summarize)
 
 
 def get_exchange_headers(ids: list[str]) -> list[dict[str, object]]:
     """Return decoded JSON header objects for given exchange ids."""
-    return batch_get(ids, "exchange", _HEADER_FIELDS, _decode_headers)
+    return batch_get(ids, "exchanges", _HEADER_FIELDS, _decode_headers)
 
 
 def get_exchange_body(ids: list[str]) -> list[dict[str, object]]:
     """Return exchange body payloads for given ids."""
-    return batch_get(ids, "exchange", _BODY_FIELDS)
+    return batch_get(ids, "exchanges", _BODY_FIELDS)
 
 
 def _summarize(row: dict[str, object]) -> dict[str, object]:

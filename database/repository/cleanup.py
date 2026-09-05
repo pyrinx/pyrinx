@@ -7,10 +7,10 @@ from database.connection import connect
 STALE_AFTER = "-1 hour"
 
 _CHILD_TABLES = (
-    "exchange",
-    "evidence",
-    "hypothesis",
-    "finding",
+    "exchanges",
+    "evidences",
+    "hypotheses",
+    "findings",
 )
 
 
@@ -56,23 +56,23 @@ def cleanup_expired_data() -> dict[str, int]:
             WHERE status = 'closed'
               AND NOT EXISTS (
                   SELECT 1
-                  FROM exchange
-                  WHERE exchange.session_id = sessions.id
+                  FROM exchanges
+                  WHERE exchanges.session_id = sessions.id
               )
               AND NOT EXISTS (
                   SELECT 1
-                  FROM evidence
-                  WHERE evidence.session_id = sessions.id
+                  FROM evidences
+                  WHERE evidences.session_id = sessions.id
               )
               AND NOT EXISTS (
                   SELECT 1
-                  FROM hypothesis
-                  WHERE hypothesis.session_id = sessions.id
+                  FROM hypotheses
+                  WHERE hypotheses.session_id = sessions.id
               )
               AND NOT EXISTS (
                   SELECT 1
-                  FROM finding
-                  WHERE finding.session_id = sessions.id
+                  FROM findings
+                  WHERE findings.session_id = sessions.id
               )
             """
         )

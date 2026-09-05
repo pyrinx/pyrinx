@@ -52,7 +52,7 @@ def create_knowledge(
     with connect() as conn:
         knowledge_id = insert_with_unique_id(
             conn,
-            "knowledge",
+            "knowledges",
             {
                 "summary": summary,
                 "indicators": indicators,
@@ -63,13 +63,13 @@ def create_knowledge(
             },
         )
 
-        row = fetch_one(conn, "knowledge", knowledge_id, _FIELDS)
+        row = fetch_one(conn, "knowledges", knowledge_id, _FIELDS)
 
     return _decode(row)
 
 
 def get_knowledge(ids: list[str]) -> list[dict[str, object]]:
-    return batch_get(ids, "knowledge", _FIELDS, _decode)
+    return batch_get(ids, "knowledges", _FIELDS, _decode)
 
 
 def list_knowledge(vuln_class: str) -> list[str]:
@@ -78,7 +78,7 @@ def list_knowledge(vuln_class: str) -> list[str]:
     filters = {"vuln_class": vuln_class}
 
     with connect() as conn:
-        rows = fetch_rows(conn, "knowledge", fields=["id"], filters=filters)
+        rows = fetch_rows(conn, "knowledges", fields=["id"], filters=filters)
 
     return [r["id"] for r in rows]
 
@@ -111,7 +111,7 @@ def update_knowledge(
     with connect() as conn:
         row = update_one(
             conn=conn,
-            table="knowledge",
+            table="knowledges",
             row_id=knowledge_id,
             updates=updates,
             fields=_FIELDS,

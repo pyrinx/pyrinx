@@ -55,11 +55,11 @@ def create_hypothesis(
 
         if parent_id is not None:
             parent_id = non_empty_str(parent_id, "parent_id")
-            require_exists(conn, "hypothesis", parent_id, "parent_id")
+            require_exists(conn, "hypotheses", parent_id, "parent_id")
 
         hypothesis_id = insert_with_unique_id(
             conn,
-            "hypothesis",
+            "hypotheses",
             {
                 "session_id": session_id,
                 "parent_id": parent_id,
@@ -72,7 +72,7 @@ def create_hypothesis(
             },
         )
 
-        return fetch_one(conn, "hypothesis", hypothesis_id, _FIELDS)
+        return fetch_one(conn, "hypotheses", hypothesis_id, _FIELDS)
 
 
 def update_hypothesis_status(hypothesis_id: str, status: str) -> dict[str, object]:
@@ -80,11 +80,11 @@ def update_hypothesis_status(hypothesis_id: str, status: str) -> dict[str, objec
     status = one_of(status, HYPOTHESIS_STATUSES, "status")
 
     with connect() as conn:
-        require_exists(conn, "hypothesis", hypothesis_id, "hypothesis_id")
+        require_exists(conn, "hypotheses", hypothesis_id, "hypothesis_id")
 
         conn.execute(
             """
-            UPDATE hypothesis
+            UPDATE hypotheses
             SET status = ?,
                 updated_at = strftime(
                     '%Y-%m-%dT%H:%M:%fZ', 'now'
@@ -94,12 +94,11 @@ def update_hypothesis_status(hypothesis_id: str, status: str) -> dict[str, objec
             (status, hypothesis_id),
         )
 
-        # touch and fetch updated row
-        return fetch_one(conn, "hypothesis", hypothesis_id, _FIELDS)
+        return fetch_one(conn, "hypotheses", hypothesis_id, _FIELDS)
 
 
 def get_hypothesis(ids: list[str]) -> list[dict[str, object]]:
-    return batch_get(ids, "hypothesis", _FIELDS)
+    return batch_get(ids, "hypotheses", _FIELDS)
 
 
 def list_hypotheses(
@@ -112,7 +111,7 @@ def list_hypotheses(
     with connect() as conn:
         return fetch_rows(
             conn=conn,
-            table="hypothesis",
+            table="hypotheses",
             fields=("id", "parent_id", "status"),
             filters={
                 "session_id": session_id,

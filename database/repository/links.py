@@ -12,12 +12,12 @@ def link_hypothesis_evidence(
     evidence_id: str,
 ) -> dict[str, object]:
     return _link(
-        "hypothesis_evidence",
+        "hypotheses_evidences",
         "hypothesis_id",
-        "hypothesis",
+        "hypotheses",
         hypothesis_id,
         "evidence_id",
-        "evidence",
+        "evidences",
         evidence_id,
         "hypothesis_id",
         "evidence_id",
@@ -29,12 +29,12 @@ def link_finding_evidence(
     evidence_id: str,
 ) -> dict[str, object]:
     return _link(
-        "finding_evidence",
+        "findings_evidences",
         "finding_id",
-        "finding",
+        "findings",
         finding_id,
         "evidence_id",
-        "evidence",
+        "evidences",
         evidence_id,
         "finding_id",
         "evidence_id",

@@ -48,11 +48,11 @@ def create_evidence(
 
         if exchange_id is not None:
             exchange_id = non_empty_str(exchange_id, "exchange_id")
-            require_exists(conn, "exchange", exchange_id, "exchange_id")
+            require_exists(conn, "exchanges", exchange_id, "exchange_id")
 
         evidence_id = insert_with_unique_id(
             conn,
-            "evidence",
+            "evidences",
             {
                 "session_id": session_id,
                 "exchange_id": exchange_id,
@@ -63,12 +63,12 @@ def create_evidence(
             },
         )
 
-        return fetch_one(conn, "evidence", evidence_id, _FIELDS)
+        return fetch_one(conn, "evidences", evidence_id, _FIELDS)
 
 
 def get_evidence(ids: list[str]) -> list[dict[str, object]]:
     """Fetch multiple evidence rows by id (errors inline)."""
-    return batch_get(ids, "evidence", _FIELDS)
+    return batch_get(ids, "evidences", _FIELDS)
 
 
 def list_evidence(
@@ -82,7 +82,7 @@ def list_evidence(
     with connect() as conn:
         return fetch_rows(
             conn=conn,
-            table="evidence",
+            table="evidences",
             fields=("id", "exchange_id", "observation", "confidence"),
             filters={
                 "session_id": session_id,

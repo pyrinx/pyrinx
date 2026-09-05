@@ -50,7 +50,7 @@ def create_finding(
 
         finding_id = insert_with_unique_id(
             conn,
-            "finding",
+            "findings",
             {
                 "session_id": session_id,
                 "title": title,
@@ -61,14 +61,14 @@ def create_finding(
             },
         )
 
-        row = fetch_one(conn, "finding", finding_id, _FIELDS)
+        row = fetch_one(conn, "findings", finding_id, _FIELDS)
 
     row["verified"] = bool(row["verified"])
     return row
 
 
 def get_finding(ids: list[str]) -> list[dict[str, object]]:
-    return batch_get(ids, "finding", _FIELDS, _normalize)
+    return batch_get(ids, "findings", _FIELDS, _normalize)
 
 
 def update_finding_verification(
@@ -85,7 +85,7 @@ def update_finding_verification(
 
         row = update_one(
             conn=conn,
-            table="finding",
+            table="findings",
             row_id=finding_id,
             updates={"verified": int(verified)},
             filters={"session_id": session_id},
@@ -105,7 +105,7 @@ def list_findings(
     with connect() as conn:
         rows = fetch_rows(
             conn=conn,
-            table="finding",
+            table="findings",
             fields=("id", "title", "verified", "vuln_class"),
             filters={
                 "session_id": session_id,
