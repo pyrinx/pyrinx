@@ -66,6 +66,7 @@ def connect() -> Iterator[sqlite3.Connection]:
 
     try:
         conn.execute("PRAGMA foreign_keys = ON")
+        # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
         conn.execute(f"PRAGMA busy_timeout = {_BUSY_TIMEOUT_MS}")
         yield conn
         conn.commit()

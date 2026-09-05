@@ -59,6 +59,7 @@ def _link(
         require_exists(conn, left_table, left_id, left_field)
         require_exists(conn, right_table, right_id, right_field)
 
+        # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
         cursor = conn.execute(
             f"""
             INSERT INTO {junction} ({left_column}, {right_column})

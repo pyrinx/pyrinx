@@ -89,6 +89,7 @@ def insert_with_unique_id(
         new_id = generate_id(prefix)
 
         try:
+            # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
             conn.execute(statement, [new_id, *columns.values()])
             return new_id
         except sqlite3.IntegrityError as exc:

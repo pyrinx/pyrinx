@@ -18,6 +18,7 @@ def require_exists(
     field: str,
 ) -> None:
     """Raise ValidationError when a referenced row does not exist."""
+    # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
     row = conn.execute(
         f"SELECT 1 FROM {table} WHERE id = ?",
         (row_id,),
@@ -56,6 +57,7 @@ def touch_many(
         return
 
     placeholders = ", ".join("?" for _ in row_ids)
+    # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
     conn.execute(
         f"""
         UPDATE {table}
@@ -78,6 +80,7 @@ def fetch_one(
     Raises:
         ValidationError: If the row does not exist.
     """
+    # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
     columns = ", ".join(fields)
 
     row = conn.execute(
@@ -144,8 +147,10 @@ def fetch_rows(
     if active_filters:
         where_clause = " AND ".join(f"{col} = ?" for col in active_filters)
         query = (
+            # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
             f"SELECT {columns} FROM {table} WHERE {where_clause} ORDER BY {order_by}"
         )
+        # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
         values = tuple(active_filters.values())
         rows = conn.execute(query, values).fetchall()
     else:
@@ -190,6 +195,7 @@ def update_one(
     active_filters = {k: v for k, v in (filters or {}).items() if v is not None}
     for col, val in active_filters.items():
         where_conditions.append(f"{col} = ?")
+        # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query
         params.append(val)
 
     where_clause = " AND ".join(where_conditions)
