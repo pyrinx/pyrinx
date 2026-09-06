@@ -1,8 +1,4 @@
-"""HTTP response link extractor tool.
-
-Parses HTML response bodies for given exchange IDs and extracts URLs from
-specified HTML tags. Returns extracted links grouped by exchange ID.
-"""
+"""Link extractor tool — extracts URLs from HTTP response bodies by HTML tag."""
 
 from __future__ import annotations
 
@@ -18,7 +14,6 @@ from tools.registry.types import ToolDef
 
 from .schema import SCHEMA
 
-# HTML tags supported for link extraction, mapped to the attribute that holds the URL.
 _TAG_ATTRIBUTE: dict[str, str] = {
     "a": "href",
     "audio": "src",
@@ -38,18 +33,13 @@ ExchangeResult = dict[str, list[str] | str]
 def _extract_links_from_html(
     html: str, base_url: str, tags: list[str]
 ) -> ExchangeResult:
-    """Parse an HTML document and extract absolute URLs from the given tags.
+    unsupported = [tag for tag in tags if tag not in _TAG_ATTRIBUTE]
+    if unsupported:
+        supported = ", ".join(sorted(_TAG_ATTRIBUTE))
+        return {
+            "error": f"unsupported tags: {', '.join(unsupported)}. Supported: {supported}."
+        }
 
-    Args:
-        html: Raw HTML content to parse.
-        base_url: Base URL used to resolve relative links.
-        tags: HTML tags to extract URLs from.
-
-    Returns:
-        Dict with either a ``"links"`` key (list of URLs), optionally accompanied
-        by a ``"warning"`` for tags that were requested but not found, or an
-        ``"error"`` key when no links could be extracted.
-    """
     tree = HTMLParser(html)
     extracted_links: list[str] = []
     found_tags: set[str] = set()
@@ -71,8 +61,7 @@ def _extract_links_from_html(
             url = urljoin(base_url, raw_value) if base_url else raw_value
             extracted_links.append(url)
 
-    known_tags = [tag for tag in tags if tag in _TAG_ATTRIBUTE]
-    missing_tags = [tag for tag in known_tags if tag not in found_tags]
+    missing_tags = [tag for tag in tags if tag not in found_tags]
 
     if not extracted_links:
         error_tags = ", ".join(missing_tags or tags)
@@ -94,22 +83,19 @@ def extract_links_by_exchange(
 ) -> dict[str, ExchangeResult]:
     """Extract absolute URLs from response bodies for the given exchange IDs.
 
-    Fetches response bodies, parses them as HTML, extracts links from the
-    specified tags, and resolves relative URLs against each exchange's base URL.
+    Fetches response bodies, parses them as HTML, extracts links from the given
+    tags, and resolves relative URLs against each exchange's base URL.
 
     Args:
-        ids: Exchange IDs whose response bodies should be processed. Must be
-            non-empty.
-        tags: HTML tags to extract URLs from. Defaults to ``["a"]``.
-            Supported values: ``a``, ``audio``, ``iframe``, ``img``, ``link``,
-            ``script``, ``source``, ``video``.
+        ids: Exchange IDs to process. Must be non-empty.
+        tags: HTML tags to extract links from. Defaults to ``["a"]``.
+            Valid values are the keys of ``_TAG_ATTRIBUTE``.
 
     Returns:
-        Dict mapping each exchange ID to its result. Each result contains one of:
+        Dict mapping each exchange ID to one of:
 
-        - ``{"links": [...]}`` — successfully extracted URLs.
-        - ``{"links": [...], "warning": "..."}`` — URLs extracted, but some
-          requested tags were absent in the document.
+        - ``{"links": [...]}`` — extracted URLs.
+        - ``{"links": [...], "warning": "..."}`` — extracted URLs; some tags absent.
         - ``{"error": "..."}`` — extraction failed for this exchange.
 
     Raises:
@@ -119,9 +105,7 @@ def extract_links_by_exchange(
         raise ValueError("ids must be a non-empty list")
 
     resolved_tags = tags if tags is not None else _DEFAULT_TAGS
-
     exchanges = get_exchange_body(ids)
-
     results: dict[str, ExchangeResult] = {}
 
     for exchange in exchanges:
@@ -146,18 +130,14 @@ def extract_links_by_exchange(
 def handle(
     arguments: dict[str, object], ctx: AppContext
 ) -> dict[str, ExchangeResult | str]:
-    """Dispatch handler invoked by the tool registry.
-
-    Wraps ``extract_links_by_exchange`` and translates ``ValueError`` (invalid
-    arguments) into a structured error dict understood by the registry.
+    """Registry dispatch handler for this tool.
 
     Args:
-        arguments: Raw tool arguments from the registry (``ids``, optional ``tags``).
+        arguments: Tool arguments (``ids``, optional ``tags``).
         ctx: Application context (unused; required by registry contract).
 
     Returns:
-        Dict mapping exchange IDs to results, or a top-level error dict on
-        validation failure.
+        Dict mapping exchange IDs to results, or an error dict on validation failure.
     """
     try:
         return extract_links_by_exchange(**arguments)  # type: ignore[arg-type]

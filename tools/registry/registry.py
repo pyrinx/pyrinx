@@ -66,7 +66,12 @@ def discover_tools() -> None:
 
         try:
             module = importlib.import_module(module_name)
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as exc:
+            # Only skip tool packages that have no tool.py module.
+            # Re-raise if the missing module is a dependency of the tool —
+            # that indicates a broken installation, not an absent tool file.
+            if exc.name != module_name:
+                raise
             continue
 
         tool = getattr(module, "TOOL", None)
