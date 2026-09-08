@@ -9,7 +9,7 @@ from selectolax.parser import HTMLParser
 from core.agent_context import AppContext
 from database.repository import get_exchange_body
 from tools.policy.categories import ToolCategory
-from tools.policy.tags import what, when, where, who
+from tools.policy.tags import ACTION, FOR, FROM
 from tools.registry.types import ToolDef
 
 from .schema import SCHEMA
@@ -149,7 +149,7 @@ TOOL = ToolDef(
     name="link_extractor",
     description="Extract links from response bodies of given exchange IDs by HTML tags.",
     category=ToolCategory.ANALYSIS,
-    tags=[what.extraction, who.html, when.response, where.body],
+    tags=[ACTION.extract, FOR.link, FROM.html],
     parameters=SCHEMA,
     handler=handle,
 )

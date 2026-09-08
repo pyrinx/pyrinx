@@ -9,7 +9,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from tools.policy.tags import Tag
 from tools.policy.validator import validate_tags
 
 
@@ -27,17 +26,15 @@ class ToolDef:
         parameters: JSON-schema-compatible parameter definition.
         handler: Callable invoked by the registry dispatcher. Receives
             a dict of arguments and an AppContext.
-        tags: Optional W4 classification tags. Maximum four tags, at most
-            one per namespace (what, who, when, where). Produce tags via
-            the policy namespaces::
+        tags: 2 to 3 tags describing the tool. Exactly one ACTION tag is
+            required, plus at least one of FOR / FROM::
 
-                from tools.policy.tags import what, who, when, where
+                from tools.policy.tags import ACTION, FOR, FROM
 
-                tags = [what.extraction, who.html, when.response, where.body]
+                tags = [ACTION.extract, FOR.link, FROM.html]
 
     Raises:
-        TypeError: If any tag is not a Tag instance.
-        ValueError: If tags exceed four items or repeat a namespace.
+        ValueError: If tags violate the tag policy (see validate_tags).
     """
 
     name: str
@@ -45,7 +42,7 @@ class ToolDef:
     category: Any
     parameters: dict[str, Any]
     handler: Callable[..., Any]
-    tags: list[Tag] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Validate tags on construction."""
