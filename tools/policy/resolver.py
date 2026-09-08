@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from core.agent_state import AgentStep
 from tools.policy.categories import ToolCategory
 from tools.policy.policy import TOOL_POLICY
-from tools.policy.tags import Tag
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,7 +30,7 @@ class ToolPointer:
     tool_name: str
     tool_desc: str
     category: ToolCategory
-    tags: frozenset[Tag]
+    tags: frozenset[str]
 
 
 def resolve_tool_pointers(step: AgentStep) -> str:
