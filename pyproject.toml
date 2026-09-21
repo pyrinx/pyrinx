@@ -9,14 +9,14 @@ dependencies = [
     "pygments>=2.19",
     "questionary>=2.1.1",
     "rich>=15.0.0",
-    "selectolax>=0.4.11",
+    "selectolax>=0.4.12",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.0.0",
-    "ruff>=0.16.6",
+    "ruff>=0.16.8",
 ]
 
 [tool.pytest.ini_options]
